@@ -16,7 +16,24 @@ app.use("/customer/auth/*", function auth(req,res,next){
  
 const PORT =5000;
 
-app.use("/customer", customer_routes);
+app.use("/customer/auth/*", function auth(req, res, next) {
+    // Check if session contains authorization info
+    if (req.session.authorization) {
+        let token = req.session.authorization['accessToken'];
+
+        // Verify JWT token
+        jwt.verify(token, "access", (err, user) => {
+            if (!err) {
+                req.user = user; // Attach user info to request
+                next(); // Continue to the next middleware/route
+            } else {
+                return res.status(403).json({ message: "User not authenticated" });
+            }
+        });
+    } else {
+        return res.status(403).json({ message: "User not logged in" });
+    }
+});
 app.use("/", genl_routes);
 
 app.listen(PORT,()=>console.log("Server is running"));

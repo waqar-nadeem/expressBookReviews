@@ -12,7 +12,8 @@ public_users.post("/register", (req, res) => {
         return res.status(400).json({ message: "Username and password are required." });
     }
 
-    if (!isValid(username)) {
+    // Check if username already exists in users array
+    if (users.find(user => user.username === username)) {
         return res.status(400).json({ message: "Username already exists." });
     }
 
@@ -54,14 +55,21 @@ public_users.get('/author/:author', (req, res) => {
     const author = req.params.author.toLowerCase();
 
     return new Promise((resolve, reject) => {
-        const filteredBooks = Object.values(books).filter(book => book.author.toLowerCase() === author);
+        const filteredBooks = Object.entries(books)
+            .filter(([isbn, book]) => book.author.toLowerCase() === author)
+            .map(([isbn, book]) => ({
+                isbn,
+                title: book.title,
+                author: book.author
+            }));
+
         if (filteredBooks.length > 0) {
             resolve(filteredBooks);
         } else {
             reject("No books found for this author.");
         }
     })
-    .then(result => res.status(200).json(result))
+    .then(result => res.status(200).send(JSON.stringify(result, null, 4)))
     .catch(error => res.status(404).json({ message: error }));
 });
 
@@ -84,10 +92,14 @@ public_users.get('/title/:title', (req, res) => {
 // ✅ Task 5: Get book review (still synchronous, as reviews are inside books object)
 public_users.get('/review/:isbn', (req, res) => {
     const isbn = req.params.isbn;
-    const book = books[isbn];
 
-    if (book) {
-        return res.status(200).json(book.reviews);
+    if (books[isbn]) {
+        const reviews = books[isbn].reviews;
+        if (Object.keys(reviews).length > 0) {
+            return res.status(200).json(reviews);
+        } else {
+            return res.status(200).json({ message: "No reviews available for this book." });
+        }
     } else {
         return res.status(404).json({ message: "Book not found." });
     }

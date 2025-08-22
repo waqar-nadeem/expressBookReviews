@@ -12,7 +12,6 @@ public_users.post("/register", (req, res) => {
         return res.status(400).json({ message: "Username and password are required." });
     }
 
-    // Check if username already exists in users array
     if (users.find(user => user.username === username)) {
         return res.status(400).json({ message: "Username already exists." });
     }
@@ -21,75 +20,59 @@ public_users.post("/register", (req, res) => {
     return res.status(200).json({ message: "User registered successfully." });
 });
 
-// ✅ Task 1: Get the book list available in the shop (with Promise)
-public_users.get('/', (req, res) => {
-    return new Promise((resolve, reject) => {
-        if (books) {
-            resolve(books);
-        } else {
-            reject("No books available.");
-        }
-    })
-    .then(result => res.status(200).json(result))
-    .catch(error => res.status(500).json({ message: error }));
+// ✅ Task 10: Get the list of books (async/await)
+public_users.get('/', async (req, res) => {
+    try {
+        const result = await Promise.resolve(books);
+        res.status(200).json(result);
+    } catch (error) {
+        res.status(500).json({ message: error });
+    }
 });
 
-// ✅ Task 2: Get book details based on ISBN (with Promise)
-public_users.get('/isbn/:isbn', (req, res) => {
+// ✅ Task 11: Get book details based on ISBN
+public_users.get('/isbn/:isbn', async (req, res) => {
     const isbn = req.params.isbn;
-
-    return new Promise((resolve, reject) => {
-        const book = books[isbn];
-        if (book) {
-            resolve(book);
-        } else {
-            reject("Book not found.");
-        }
-    })
-    .then(result => res.status(200).json(result))
-    .catch(error => res.status(404).json({ message: error }));
+    try {
+        const book = await Promise.resolve(books[isbn]);
+        if (book) res.status(200).json(book);
+        else throw "Book not found";
+    } catch (error) {
+        res.status(404).json({ message: error });
+    }
 });
 
-// ✅ Task 3: Get book details based on author (with Promise)
-public_users.get('/author/:author', (req, res) => {
+// ✅ Task 12: Get book details based on Author
+public_users.get('/author/:author', async (req, res) => {
     const author = req.params.author.toLowerCase();
-
-    return new Promise((resolve, reject) => {
-        const filteredBooks = Object.entries(books)
-            .filter(([isbn, book]) => book.author.toLowerCase() === author)
-            .map(([isbn, book]) => ({
-                isbn,
-                title: book.title,
-                author: book.author
-            }));
-
-        if (filteredBooks.length > 0) {
-            resolve(filteredBooks);
-        } else {
-            reject("No books found for this author.");
-        }
-    })
-    .then(result => res.status(200).send(JSON.stringify(result, null, 4)))
-    .catch(error => res.status(404).json({ message: error }));
+    try {
+        const filteredBooks = await Promise.resolve(
+            Object.entries(books)
+                .filter(([isbn, book]) => book.author.toLowerCase() === author)
+                .map(([isbn, book]) => ({ isbn, title: book.title, author: book.author }))
+        );
+        if (filteredBooks.length > 0) res.status(200).json(filteredBooks);
+        else throw "No books found for this author";
+    } catch (error) {
+        res.status(404).json({ message: error });
+    }
 });
 
-// ✅ Task 4: Get all books based on title (with Promise)
-public_users.get('/title/:title', (req, res) => {
+// ✅ Task 13: Get book details based on Title
+public_users.get('/title/:title', async (req, res) => {
     const title = req.params.title.toLowerCase();
-
-    return new Promise((resolve, reject) => {
-        const filteredBooks = Object.values(books).filter(book => book.title.toLowerCase() === title);
-        if (filteredBooks.length > 0) {
-            resolve(filteredBooks);
-        } else {
-            reject("No books found with this title.");
-        }
-    })
-    .then(result => res.status(200).json(result))
-    .catch(error => res.status(404).json({ message: error }));
+    try {
+        const filteredBooks = await Promise.resolve(
+            Object.values(books).filter(book => book.title.toLowerCase() === title)
+        );
+        if (filteredBooks.length > 0) res.status(200).json(filteredBooks);
+        else throw "No books found with this title";
+    } catch (error) {
+        res.status(404).json({ message: error });
+    }
 });
 
-// ✅ Task 5: Get book review (still synchronous, as reviews are inside books object)
+// ✅ Task 5: Get book review (synchronous)
 public_users.get('/review/:isbn', (req, res) => {
     const isbn = req.params.isbn;
 
